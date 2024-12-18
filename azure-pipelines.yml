@@ -7,35 +7,16 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-# Install Dependencies
-- task: UsePythonVersion@1
-  inputs:
-    versionSpec: '3.x'
-
-- script: |
-    echo "Installing kubectl and Kustomize..."
-    az aks install-cli
-    sudo apt-get update
-    sudo apt-get install -y kustomize
-  displayName: 'Install Required Tools'
-
 # Clone the Repository
 - script: |
     echo "Cloning GitOps repository..."
-    git clone https://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@github.com/SarbotrickB/GitOps.git
+    git clone https://$(GITHUB_PAT)@github.com/SarbotrickB/GitOps.git
     cd GitOps
   displayName: 'Clone GitOps Repository'
 
-# Validate Kubernetes Manifests
-- script: |
-    echo "Validating Kubernetes manifests..."
-    kubectl apply --dry-run=client -f manifests/
-  displayName: 'Validate Kubernetes Manifests'
-
-# Update Manifests and Push Changes
+# Update Kubernetes Manifests
 - script: |
     echo "Updating Kubernetes manifests..."
-    cd GitOps
     sed -i 's/nginx:latest/nginx:stable/' manifests/deployment.yaml
 
     echo "Committing changes..."
@@ -46,7 +27,7 @@ steps:
     git push
   displayName: 'Update and Push Manifests'
 
-# Notify ArgoCD (Optional)
+# Trigger ArgoCD Sync Immediately
 - script: |
     echo "Triggering ArgoCD sync..."
     curl -X POST -u admin:zrlajlfdoQfy8u0f \
