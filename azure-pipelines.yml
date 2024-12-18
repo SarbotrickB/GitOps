@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Clone the Repository and Checkout Main Branch
+- script: |
+    echo "Cloning GitOps repository..."
+    git clone https://$(GITHUB_PAT)@github.com/SarbotrickB/GitOps.git
+    cd GitOps
+    echo "Checking out main branch..."
+    git checkout main
+  displayName: 'Clone and Checkout Main Branch'
+
+# Update Kubernetes Manifests
+- script: |
+    echo "Updating Kubernetes manifests..."
+    sed -i 's/nginx:latest/nginx:stable/' manifests/deployment.yaml
+
+    echo "Committing changes..."
+    git config user.email "sarbotrickbodhak@gmail.com"
+    git config user.name "Azure Pipeline Bot"
+    git add .
+    git commit -m "Updated image version"
+    git push origin main
+  displayName: 'Update and Push Manifests'
+
+# Trigger ArgoCD Sync Immediately
+- script: |
+    echo "Triggering ArgoCD sync..."
+    curl -X POST -u admin:zrlajlfdoQfy8u0f \
+      -H "Content-Type: application/json" \
+      -d '{"name": "argocd/sample-webapp", "operation": {"sync": {}}}' \
+      http://170.64.223.41:30978/api/v1/applications/argocd/sample-webapp/sync
+  displayName: 'Trigger ArgoCD Sync'
