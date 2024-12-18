@@ -13,5 +13,5 @@ steps:
     curl -X POST -u admin:zrlajlfdoQfy8u0f \
       -H "Content-Type: application/json" \
       -d '{"name": "argocd/sample-webapp", "operation": {"sync": {}}}' \
-      http://<VM-IP>:30978/api/v1/applications/argocd/sample-webapp/sync
+      http://170.64.223.41:30978/api/v1/applications/argocd/sample-webapp/sync
   displayName: 'Trigger ArgoCD Sync'
