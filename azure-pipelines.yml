@@ -7,12 +7,14 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-# Clone the Repository
+# Clone the Repository and Checkout Main Branch
 - script: |
     echo "Cloning GitOps repository..."
     git clone https://$(GITHUB_PAT)@github.com/SarbotrickB/GitOps.git
     cd GitOps
-  displayName: 'Clone GitOps Repository'
+    echo "Checking out main branch..."
+    git checkout main
+  displayName: 'Clone and Checkout Main Branch'
 
 # Update Kubernetes Manifests
 - script: |
@@ -24,7 +26,7 @@ steps:
     git config user.name "Azure Pipeline Bot"
     git add .
     git commit -m "Updated image version"
-    git push
+    git push origin main
   displayName: 'Update and Push Manifests'
 
 # Trigger ArgoCD Sync Immediately
