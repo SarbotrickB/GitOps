@@ -1,1 +1,56 @@
+trigger:
+  branches:
+    include:
+      - main
 
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Install Dependencies
+- task: UsePythonVersion@1
+  inputs:
+    versionSpec: '3.x'
+
+- script: |
+    echo "Installing kubectl and Kustomize..."
+    az aks install-cli
+    sudo apt-get update
+    sudo apt-get install -y kustomize
+  displayName: 'Install Required Tools'
+
+# Clone the Repository
+- script: |
+    echo "Cloning GitOps repository..."
+    git clone https://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@github.com/SarbotrickB/GitOps.git
+    cd GitOps
+  displayName: 'Clone GitOps Repository'
+
+# Validate Kubernetes Manifests
+- script: |
+    echo "Validating Kubernetes manifests..."
+    kubectl apply --dry-run=client -f manifests/
+  displayName: 'Validate Kubernetes Manifests'
+
+# Update Manifests and Push Changes
+- script: |
+    echo "Updating Kubernetes manifests..."
+    cd GitOps
+    sed -i 's/nginx:latest/nginx:stable/' manifests/deployment.yaml
+
+    echo "Committing changes..."
+    git config user.email "sarbotrickbodhak@gmail.com"
+    git config user.name "Azure Pipeline Bot"
+    git add .
+    git commit -m "Updated image version"
+    git push
+  displayName: 'Update and Push Manifests'
+
+# Notify ArgoCD (Optional)
+- script: |
+    echo "Triggering ArgoCD sync..."
+    curl -X POST -u admin:zrlajlfdoQfy8u0f \
+      -H "Content-Type: application/json" \
+      -d '{"name": "argocd/sample-webapp", "operation": {"sync": {}}}' \
+      http://170.64.223.41:30978/api/v1/applications/argocd/sample-webapp/sync
+  displayName: 'Trigger ArgoCD Sync'
